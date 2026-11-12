@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101619">
+  <meta name="description" content="DrowsyGuard is a local, browser-based driver attention monitor for a computer vision midterm project.">
+  <title>DrowsyGuard · Driver attention monitor</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./vendor/chart/chart.umd.min.js" defer></script>
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">◎</span> DrowsyGuard</a>
+      <span class="privacy"><span></span> On-device processing</span>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="intro">
+      <div><h1>Driver attention monitor</h1><p>Track eye closure, yawns and head movement in real time.</p></div>
+      <button class="button secondary" id="export" disabled>Export session CSV</button>
+    </section>
+    <div class="dashboard">
+      <section class="card feed-card" aria-labelledby="feed-heading">
+        <div class="card-head">
+          <h2 id="feed-heading">Camera feed</h2>
+          <span class="status" id="tracking" role="status" data-tone="idle">Offline</span>
+        </div>
+        <div class="viewport" id="viewport">
+          <video id="video" muted playsinline aria-label="Face tracking video"></video>
+          <canvas id="overlay" aria-hidden="true"></canvas>
+          <div class="placeholder" id="placeholder">
+            <div class="focus-icon" aria-hidden="true">◎</div>
+            <strong>Ready to track</strong>
+            <span>Start your camera or open a video.</span>
+          </div>
+          <div id="notice" class="notice" role="status" hidden></div>
+        </div>
+        <div class="feed-controls">
+          <button class="button primary" id="camera">Start camera</button>
+          <label class="button secondary upload" for="file">Open video<input id="file" type="file" accept="video/*" aria-label="Open video"></label>
+          <button class="button secondary" id="sample">Try sample</button>
+          <button class="button secondary" id="stop" disabled>Stop</button>
+        </div>
+      </section>
+      <section class="card telemetry" aria-labelledby="metrics-heading">
+        <div class="card-head"><h2 id="metrics-heading">Live metrics</h2><span class="caption">SESSION</span></div>
+        <div class="metric-grid">
+          <div class="metric"><span>Eye aspect ratio</span><strong id="ear">—</strong><small>EAR</small></div>
+          <div class="metric"><span>Mouth aspect ratio</span><strong id="mar">—</strong><small>MAR</small></div>
+          <div class="metric"><span>Eye closure</span><strong id="perclos">—</strong><small>PERCLOS · 30 s</small></div>
+          <div class="metric"><span>Yawns</span><strong id="yawns">0</strong><small id="blink-count">0 blinks</small></div>
+        </div>
+        <div class="pose">
+          <div><span>Pitch</span><strong id="pitch">—</strong></div>
+          <div><span>Yaw</span><strong id="yaw">—</strong></div>
+          <div><span>Roll</span><strong id="roll">—</strong></div>
+        </div>
+        <div class="session-foot"><span id="fps">— FPS</span><span id="inference">— ms inference</span></div>
+      </section>
+      <section class="card chart-card" aria-labelledby="chart-heading">
+        <div class="card-head"><h2 id="chart-heading">Eye and mouth activity</h2><span class="caption">LAST 30 SECONDS</span></div>
+        <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Time series of eye and mouth aspect ratios"></canvas></div>
+      </section>
+      <section class="card settings" aria-labelledby="settings-heading">
+        <div class="card-head"><h2 id="settings-heading">Settings</h2><button class="text-button" id="reset-settings" type="button">Reset defaults</button></div>
+        <div class="settings-content">
+          <div class="toggles">
+            <label><input type="checkbox" id="mesh" checked> Face mesh</label>
+            <label><input type="checkbox" id="mirror" checked> Mirror view</label>
+            <label><input type="checkbox" id="sound" checked> Sound alerts</label>
+          </div>
+          <label class="setting-row">Pose estimator<select id="method"><option value="matrix">MediaPipe matrix</option><option value="geometric">Geometric fit</option></select></label>
+          <div class="thresholds">
+            <label>EAR threshold<input id="earThreshold" type="number" min="0.05" max="0.65" step="0.005" value="0.2"></label>
+            <label>MAR threshold<input id="marThreshold" type="number" min="0.05" max="1" step="0.005" value="0.32"></label>
+            <label>Yaw limit (°)<input id="yawThreshold" type="number" min="10" max="80" step="1" value="30"></label>
+            <label>Signal smoothing<select id="smoothing"><option value="0">Off</option><option value="80" selected>Low</option><option value="160">Medium</option><option value="260">High</option></select></label>
+          </div>
+          <button class="button secondary calibrate" id="calibrate" disabled>Calibrate · 10 seconds</button>
+          <p class="hint" id="calibration-info" role="status">Look straight ahead with eyes open and mouth relaxed.</p>
+        </div>
+      </section>
+      <section class="card log-card" aria-labelledby="log-heading">
+        <div class="card-head"><h2 id="log-heading">Session events</h2><span class="caption" id="event-count">0 EVENTS</span></div>
+        <ol id="events"></ol>
+        <p class="hint empty-log" id="empty-log">Blinks, yawns and attention alerts appear here.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="wrap footer">Computer Vision midterm prototype. Use for classroom evaluation only.</footer>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
