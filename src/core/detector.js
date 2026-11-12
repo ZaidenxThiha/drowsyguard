@@ -4,7 +4,8 @@ export const DEFAULTS = Object.freeze({
 
 const WINDOW_MS = 30_000;
 const MAX_GAP_MS = 500;
-const YAW_RELEASE_MARGIN_DEG = 3;
+const LOOK_AWAY_RELEASE_MARGIN_DEG = 3;
+const RADIANS_PER_DEGREE = Math.PI / 180;
 
 export const EVENT_LABELS = Object.freeze({
   blink: "Blink",
@@ -20,14 +21,21 @@ function eyesClosed(metrics, { earThreshold }) {
   return metrics.ear < earThreshold && (metrics.rawEar ?? metrics.ear) < earThreshold;
 }
 
+function lookingAway({ yaw, pitch }, { yawThreshold }, fired) {
+  if (!Number.isFinite(yaw) && !Number.isFinite(pitch)) return false;
+  const horizontal = Number.isFinite(yaw) ? yaw : 0;
+  // Positive pitch points down and has its own alert. For an upward turn,
+  // the dot product with straight ahead combines the horizontal and vertical turn.
+  const upward = Number.isFinite(pitch) ? Math.min(0, pitch) : 0;
+  const forward = Math.cos(horizontal * RADIANS_PER_DEGREE) * Math.cos(upward * RADIANS_PER_DEGREE);
+  const limit = yawThreshold - (fired ? LOOK_AWAY_RELEASE_MARGIN_DEG : 0);
+  return forward <= Math.cos(limit * RADIANS_PER_DEGREE);
+}
+
 const RULES = [
   { key: "eyeClosure", duration: 1250, active: eyesClosed },
   { key: "yawn", duration: 1000, active: (m, s) => m.mar >= s.marThreshold },
-  {
-    key: "lookingAway",
-    duration: 1000,
-    active: (m, s, fired) => Math.abs(m.yaw) >= s.yawThreshold - (fired ? YAW_RELEASE_MARGIN_DEG : 0),
-  },
+  { key: "lookingAway", duration: 1000, active: lookingAway },
   { key: "headDown", duration: 1000, active: (m) => m.pitch >= 22 },
 ];
 

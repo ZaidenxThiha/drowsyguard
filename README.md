@@ -21,7 +21,7 @@ Open [http://127.0.0.1:4173](http://127.0.0.1:4173). The camera requires localho
 
 The prolonged eye-closure alert clears on the first tracked open-eye frame. Sound plays once when an active alert begins. The PERCLOS card shows eye closure over the previous 30 seconds and can remain highlighted after the eyes reopen.
 
-The look-away alert defaults to an 18° turn in either direction held for one second. After calibration the angle is measured from your straight-ahead pose. The alert clears when you return within 15° at the default setting. You can change the trigger angle under **Settings → Look-away angle**.
+The look-away alert defaults to an 18° turn up, left, right, or diagonally upward held for one second. After calibration the angle is measured from your straight-ahead pose. The alert clears when you return within 15° at the default setting. You can change the trigger angle under **Settings → Look-away angle**. Sustained downward pitch uses the head-down rule.
 
 The 468-point overlay uses the canonical face surface. The MediaPipe task also predicts 10 iris points. Settings include thresholds, smoothing, mirrored display, sound, and a choice between MediaPipe's pose matrix and an independent seven-point geometric fit.
 
