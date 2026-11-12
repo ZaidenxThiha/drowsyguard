@@ -27,6 +27,14 @@ try {
     args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", `--use-file-for-fake-video-capture=${video}`],
   });
   const page = await browser.newPage({ acceptDownloads: true, viewport: { width: 1400, height: 1050 } });
+  await page.addInitScript(() => {
+    window.alertToneStarts = 0;
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (...args) {
+      window.alertToneStarts++;
+      return start.apply(this, args);
+    };
+  });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(url);
@@ -63,7 +71,21 @@ try {
   await page.locator("#method").selectOption("geometric");
   await page.waitForFunction(() => /°$/.test(document.getElementById("pitch").textContent));
   await page.locator("#calibrate").click();
-  await page.waitForFunction(() => document.getElementById("calibration-info").textContent.includes("Calibration complete"), { timeout: 20_000 });
+  await page.waitForFunction(() => document.getElementById("calibration-info").textContent.includes("Calibration complete"), null, { timeout: 20_000 });
+  const earThreshold = page.locator("#earThreshold");
+  const initialTones = await page.evaluate(() => window.alertToneStarts);
+  await earThreshold.fill("0.65");
+  await earThreshold.press("Tab");
+  await page.waitForFunction(() => document.getElementById("notice").textContent.includes("Prolonged eye closure"));
+  await page.waitForFunction((count) => window.alertToneStarts === count + 1, initialTones);
+  await page.waitForFunction(() => document.getElementById("perclos-card").classList.contains("high-perclos"), null, { timeout: 25_000 });
+  assert.equal(await page.evaluate(() => window.alertToneStarts), initialTones + 1);
+  await earThreshold.fill("0.05");
+  await earThreshold.press("Tab");
+  await page.locator("#notice").waitFor({ state: "hidden", timeout: 1500 });
+  assert.equal(await page.locator("#perclos-card").evaluate((element) => element.classList.contains("high-perclos")), true);
+  await page.waitForTimeout(2600);
+  assert.equal(await page.evaluate(() => window.alertToneStarts), initialTones + 1);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   assert.equal(await page.locator("#video").evaluate((element) => element.srcObject), null);
   assert.equal(await page.locator("#tracking").textContent(), "Offline");

@@ -14,8 +14,13 @@ export const EVENT_LABELS = Object.freeze({
   headDown: "Head down",
 });
 
+function eyesClosed(metrics, { earThreshold }) {
+  // Smooth the onset, then allow a fresh open-eye reading to clear the alert.
+  return metrics.ear < earThreshold && (metrics.rawEar ?? metrics.ear) < earThreshold;
+}
+
 const RULES = [
-  { key: "eyeClosure", duration: 1250, active: (m, s) => m.ear < s.earThreshold },
+  { key: "eyeClosure", duration: 1250, active: eyesClosed },
   { key: "yawn", duration: 1000, active: (m, s) => m.mar >= s.marThreshold },
   { key: "lookingAway", duration: 2000, active: (m, s) => Math.abs(m.yaw) >= s.yawThreshold },
   { key: "headDown", duration: 1000, active: (m) => m.pitch >= 22 },
@@ -56,11 +61,11 @@ export class AttentionDetector {
     const perclos = valid > 0 ? closed / valid : 0;
     if (!metrics) {
       this.interrupt();
-      return { events, alerts: [], perclos, valid };
+      return { events, alerts: [], perclos, valid, highPerclos: false };
     }
 
     const alerts = [];
-    this.#last = { time, closed: metrics.ear < settings.earThreshold };
+    this.#last = { time, closed: eyesClosed(metrics, settings) };
     for (const rule of RULES) {
       let episode = this.#episodes.get(rule.key);
       if (rule.active(metrics, settings)) {
@@ -86,12 +91,9 @@ export class AttentionDetector {
       }
     }
     const high = valid >= 15_000 && perclos >= (this.#highPerclos ? 0.16 : 0.2);
-    if (high) {
-      alerts.push("perclos");
-      if (!this.#highPerclos) events.push("perclos");
-    }
+    if (high && !this.#highPerclos) events.push("perclos");
     this.#highPerclos = high;
-    return { events, alerts, perclos, valid };
+    return { events, alerts, perclos, valid, highPerclos: high };
   }
 }
 

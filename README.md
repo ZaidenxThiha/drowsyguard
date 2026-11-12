@@ -19,6 +19,8 @@ Open [http://127.0.0.1:4173](http://127.0.0.1:4173). The camera requires localho
 2. For your camera, face forward with your eyes open and mouth relaxed, then select **Calibrate · 10 seconds**. Calibration updates EAR and MAR thresholds and sets the neutral pose for the selected estimator.
 3. View the signal chart and session events. Use **Export session CSV** to save the time series and detected events. The export remains available when the source stops or a clip ends.
 
+The prolonged eye-closure alert clears on the first tracked open-eye frame. Sound plays once when an active alert begins. The PERCLOS card shows eye closure over the previous 30 seconds and can remain highlighted after the eyes reopen.
+
 The 468-point overlay uses the canonical face surface. The MediaPipe task also predicts 10 iris points. Settings include thresholds, smoothing, mirrored display, sound, and a choice between MediaPipe's pose matrix and an independent seven-point geometric fit.
 
 ![DrowsyGuard tracking the portrait fixture](docs/dashboard.png)
@@ -39,7 +41,7 @@ For the dlib benchmark, install `dlib` and `opencv-python-headless` in a Python 
 python tools/benchmark_dlib.py --predictor /path/to/shape_predictor_68_face_landmarks.dat
 ```
 
-The benchmark scripts record one timing and face-presence result per frame. Browser timings cover `detectForVideo`; Python timings cover grayscale conversion, face detection and the predictor when a face is found. Both exclude video decode, chart updates and rendering. The fixture videos are short controlled transformations of a still image plus a no-face control. Alert logic is exercised separately using scripted input signals. These results do not estimate driver-level precision or recall.
+The benchmark scripts record one timing and face-presence result per frame. Browser timings cover `detectForVideo`. Python timings cover grayscale conversion, face detection and the predictor when a face is found. Both exclude video decode, chart updates and rendering. The fixture videos are short controlled transformations of a still image plus a no-face control. Alert logic is exercised separately using scripted input signals. The fixtures support coverage and timing measurements. Driver-level precision and recall require annotated participant video.
 
 ## Deployment
 

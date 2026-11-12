@@ -88,3 +88,5 @@ select, input[type=number] { background: #111b1e; color: #edf3f1; border: 1px so
   .feed-controls { gap: 6px; padding-inline: 10px; }
   .button { padding-inline: 9px; }
 }
+.metric.high-perclos { border-color: #8f613b; }
+.metric.high-perclos strong, .metric.high-perclos small { color: var(--orange); }

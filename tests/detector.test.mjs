@@ -22,3 +22,25 @@ test("calibration uses medians and rejects implausible open-eye baselines", () =
   assert.deepEqual(result, { earThreshold: .21, marThreshold: .26, neutral: { pitch: -1, yaw: 4, roll: 0 } });
   assert.equal(calibrationFrom([{ ...open, ear: .08 }]), null);
 });
+
+test("a raw open-eye frame clears an active eye alert while rolling PERCLOS remains high", () => {
+  const detector = new AttentionDetector();
+  const open = { ear: .29, rawEar: .29, mar: .1, yaw: 0, pitch: 0 };
+  const closed = { ...open, ear: .1, rawEar: .1 };
+  for (let time = 0; time < 20_000; time += 50) {
+    detector.update(time, time < 10_000 ? open : closed);
+  }
+  const ongoing = detector.update(20_000, closed);
+  assert.deepEqual(ongoing.alerts, ["eyeClosure"]);
+  assert.equal(ongoing.highPerclos, true);
+
+  // EAR still reflects the smoothing lag on the first reopened frame.
+  const reopened = detector.update(20_050, { ...closed, rawEar: open.rawEar });
+  assert.deepEqual(reopened.alerts, []);
+  assert.deepEqual(reopened.events, []);
+  assert.equal(reopened.highPerclos, true);
+  for (let time = 20_100; time <= 30_000; time += 50) {
+    const state = detector.update(time, open);
+    assert.deepEqual(state.alerts, []);
+  }
+});

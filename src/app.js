@@ -19,7 +19,8 @@ let geometric;
 let engine;
 let model;
 let audio;
-let lastBeep = -Infinity;
+let tone;
+let soundingAlerts = [];
 let stream;
 let objectURL;
 let source;
@@ -100,8 +101,8 @@ function prepareAudio() {
 }
 
 function beep() {
-  if (!byId("sound").checked || audio?.state !== "running" || performance.now() - lastBeep < 2400) return;
-  lastBeep = performance.now();
+  if (!byId("sound").checked || audio?.state !== "running") return;
+  stopTone();
   const start = audio.currentTime;
   const oscillator = audio.createOscillator();
   const gain = audio.createGain();
@@ -112,13 +113,31 @@ function beep() {
   oscillator.connect(gain).connect(audio.destination);
   oscillator.start();
   oscillator.stop(start + .25);
-  oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+  tone = oscillator;
+  oscillator.onended = () => {
+    oscillator.disconnect();
+    gain.disconnect();
+    if (tone === oscillator) tone = null;
+  };
+}
+
+function stopTone() {
+  tone?.stop();
+  tone = null;
+}
+
+function updateAlertSound(alerts) {
+  if (soundingAlerts.some((alert) => !alerts.includes(alert))) stopTone();
+  if (alerts.some((alert) => !soundingAlerts.includes(alert))) beep();
+  soundingAlerts = alerts;
 }
 
 function renderMetrics(metrics, status) {
   byId("ear").textContent = format(metrics?.ear, 3);
   byId("mar").textContent = format(metrics?.mar, 3);
   byId("perclos").textContent = status?.valid ? format(status.perclos * 100, 1) + "%" : "—";
+  byId("perclos-card").classList.toggle("high-perclos", Boolean(status?.highPerclos));
+  byId("perclos-label").textContent = status?.highPerclos ? "High PERCLOS · 30 s" : "PERCLOS · 30 s";
   for (const axis of axes) byId(axis).textContent = metrics && Number.isFinite(metrics[axis]) ? format(metrics[axis], 1) + "°" : "—";
   byId("yawns").textContent = detector.yawns;
   byId("blink-count").textContent = detector.blinks + (detector.blinks === 1 ? " blink" : " blinks");
@@ -135,6 +154,7 @@ function cancelCalibration(message = "Look straight ahead with eyes open and mou
 function stop(message = "Offline", error = "") {
   generation++;
   source = null;
+  updateAlertSound([]);
   lastTracking = false;
   if (callback !== null) {
     if (video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(callback);
@@ -392,12 +412,12 @@ function frame(browserTime, metadata) {
   }
   lastTracking = Boolean(landmarks);
   updateCalibration(raw, now);
-  const status = detector.update(now, calibration ? null : metrics, settings);
+  const status = detector.update(now, !calibration && metrics ? { ...metrics, rawEar: raw.ear } : null, settings);
   for (const key of status.events) logEvent(now, key);
   showTracking(landmarks ? (status.alerts.length ? "Attention alert" : "Face tracked") : "Face not found",
     landmarks && !status.alerts.length ? "good" : "warn");
   showNotice(status.alerts.map((key) => EVENT_LABELS[key]).join(" · "));
-  if (status.alerts.length) beep();
+  updateAlertSound(status.alerts);
   draw(landmarks, width, height);
   if (browserTime - lastDisplay >= 95) {
     lastDisplay = browserTime;
@@ -424,7 +444,10 @@ window.addEventListener("pagehide", () => stop());
 byId("mirror").addEventListener("change", updateMirror);
 function updateMirror() { byId("viewport").classList.toggle("mirror", byId("mirror").checked); }
 updateMirror();
-byId("sound").addEventListener("change", prepareAudio);
+byId("sound").addEventListener("change", () => {
+  if (byId("sound").checked) prepareAudio();
+  else stopTone();
+});
 byId("mesh").addEventListener("change", () => {
   if (!byId("mesh").checked) ctx.clearRect(0, 0, overlay.width, overlay.height);
 });
