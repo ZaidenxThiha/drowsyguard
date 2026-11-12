@@ -20,7 +20,8 @@ let engine;
 let model;
 let audio;
 let tone;
-let soundingAlerts = [];
+const ALERT_REPEAT_SECONDS = .75;
+let nextToneAt = 0;
 let stream;
 let objectURL;
 let source;
@@ -100,10 +101,7 @@ function prepareAudio() {
   } catch { /* Visual alerts still work. */ }
 }
 
-function beep() {
-  if (!byId("sound").checked || audio?.state !== "running") return;
-  stopTone();
-  const start = audio.currentTime;
+function beep(start) {
   const oscillator = audio.createOscillator();
   const gain = audio.createGain();
   oscillator.frequency.value = 760;
@@ -127,9 +125,20 @@ function stopTone() {
 }
 
 function updateAlertSound(alerts) {
-  if (soundingAlerts.some((alert) => !alerts.includes(alert))) stopTone();
-  if (alerts.some((alert) => !soundingAlerts.includes(alert))) beep();
-  soundingAlerts = alerts;
+  if (!alerts.length || !byId("sound").checked || audio?.state !== "running") {
+    stopAlertSound();
+    return;
+  }
+  const now = audio.currentTime;
+  if (now < nextToneAt) return;
+  stopTone();
+  beep(now);
+  nextToneAt = now + ALERT_REPEAT_SECONDS;
+}
+
+function stopAlertSound() {
+  stopTone();
+  nextToneAt = 0;
 }
 
 function renderMetrics(metrics, status) {
@@ -446,7 +455,7 @@ function updateMirror() { byId("viewport").classList.toggle("mirror", byId("mirr
 updateMirror();
 byId("sound").addEventListener("change", () => {
   if (byId("sound").checked) prepareAudio();
-  else stopTone();
+  else stopAlertSound();
 });
 byId("mesh").addEventListener("change", () => {
   if (!byId("mesh").checked) ctx.clearRect(0, 0, overlay.width, overlay.height);

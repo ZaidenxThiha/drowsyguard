@@ -19,7 +19,7 @@ Open [http://127.0.0.1:4173](http://127.0.0.1:4173). The camera requires localho
 2. For your camera, face forward with your eyes open and mouth relaxed, then select **Calibrate · 10 seconds**. Calibration updates EAR and MAR thresholds and sets the neutral pose for the selected estimator.
 3. View the signal chart and session events. Use **Export session CSV** to save the time series and detected events. The export remains available when the source stops or a clip ends.
 
-The prolonged eye-closure alert clears on the first tracked open-eye frame. Sound plays once when an active alert begins. The PERCLOS card shows eye closure over the previous 30 seconds and can remain highlighted after the eyes reopen.
+The prolonged eye-closure alert clears on the first tracked open-eye frame. The alarm beeps every 0.75 seconds while prolonged eye closure, looking away, or head down remains active. The PERCLOS card shows eye closure over the previous 30 seconds and can remain highlighted silently after the eyes reopen.
 
 The look-away alert defaults to an 18° turn up, left, right, or diagonally upward held for one second. After calibration the angle is measured from your straight-ahead pose. The alert clears when you return within 15° at the default setting. You can change the trigger angle under **Settings → Look-away angle**. Sustained downward pitch uses the head-down rule.
 

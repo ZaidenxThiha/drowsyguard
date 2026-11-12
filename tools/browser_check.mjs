@@ -78,15 +78,22 @@ try {
   await earThreshold.fill("0.65");
   await earThreshold.press("Tab");
   await page.waitForFunction(() => document.getElementById("notice").textContent.includes("Prolonged eye closure"));
-  await page.waitForFunction((count) => window.alertToneStarts === count + 1, initialTones);
+  await page.waitForFunction((count) => window.alertToneStarts >= count + 3, initialTones);
   await page.waitForFunction(() => document.getElementById("perclos-card").classList.contains("high-perclos"), null, { timeout: 25_000 });
-  assert.equal(await page.evaluate(() => window.alertToneStarts), initialTones + 1);
+  await page.locator("#sound").uncheck();
+  const mutedTones = await page.evaluate(() => window.alertToneStarts);
+  await page.waitForTimeout(1000);
+  assert.equal(await page.evaluate(() => window.alertToneStarts), mutedTones);
+  assert.match(await page.locator("#notice").textContent(), /Prolonged eye closure/);
+  await page.locator("#sound").check();
+  await page.waitForFunction((count) => window.alertToneStarts > count, mutedTones);
   await earThreshold.fill("0.05");
   await earThreshold.press("Tab");
   await page.locator("#notice").waitFor({ state: "hidden", timeout: 1500 });
   assert.equal(await page.locator("#perclos-card").evaluate((element) => element.classList.contains("high-perclos")), true);
-  await page.waitForTimeout(2600);
-  assert.equal(await page.evaluate(() => window.alertToneStarts), initialTones + 1);
+  const clearedTones = await page.evaluate(() => window.alertToneStarts);
+  await page.waitForTimeout(1600);
+  assert.equal(await page.evaluate(() => window.alertToneStarts), clearedTones);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   assert.equal(await page.locator("#video").evaluate((element) => element.srcObject), null);
   assert.equal(await page.locator("#tracking").textContent(), "Offline");
@@ -97,7 +104,7 @@ try {
     await page.screenshot({ path: join(process.env.SCREENSHOT_DIR, "mobile.png"), fullPage: true });
   }
   assert.deepEqual(errors, []);
-  console.log("Chrome passed sample playback, upload, overlay, mirror, CSV export, fake camera, calibration, stop and mobile layout.");
+  console.log("Chrome passed sample playback, upload, overlay, mirror, CSV export, fake camera, calibration, repeating alarm, mute, alert clearing, stop and mobile layout.");
 } finally {
   await browser?.close();
   server.close();
