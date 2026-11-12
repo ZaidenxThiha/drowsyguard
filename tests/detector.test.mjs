@@ -57,3 +57,21 @@ test("a raw open-eye frame clears an active eye alert while rolling PERCLOS rema
     assert.deepEqual(state.alerts, []);
   }
 });
+
+for (const [cue, pose] of [
+  ["lookingAway", { pitch: -30, yaw: 20 }],
+  ["headDown", { pitch: 35, yaw: 0 }],
+]) {
+  test(`a neutral frame clears ${cue} even while the smoothed pose is still outside the limit`, () => {
+    const detector = new AttentionDetector();
+    const moving = { ear: .29, mar: .1, ...pose, rawPose: pose };
+    for (let time = 0; time < 1000; time += 100) detector.update(time, moving);
+    assert.deepEqual(detector.update(1000, moving).alerts, [cue]);
+    const neutral = { ...moving, rawPose: { pitch: 0, yaw: 0 } };
+    for (let time = 1050; time <= 2250; time += 50) {
+      const { alerts, events } = detector.update(time, neutral);
+      assert.deepEqual(alerts, []);
+      assert.deepEqual(events, []);
+    }
+  });
+}

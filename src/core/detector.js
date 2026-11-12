@@ -21,22 +21,31 @@ function eyesClosed(metrics, { earThreshold }) {
   return metrics.ear < earThreshold && (metrics.rawEar ?? metrics.ear) < earThreshold;
 }
 
-function lookingAway({ yaw, pitch }, { yawThreshold }, fired) {
+function outsideLookAwayAngle({ yaw, pitch }, limit) {
   if (!Number.isFinite(yaw) && !Number.isFinite(pitch)) return false;
   const horizontal = Number.isFinite(yaw) ? yaw : 0;
   // Positive pitch points down and has its own alert. For an upward turn,
   // the dot product with straight ahead combines the horizontal and vertical turn.
   const upward = Number.isFinite(pitch) ? Math.min(0, pitch) : 0;
   const forward = Math.cos(horizontal * RADIANS_PER_DEGREE) * Math.cos(upward * RADIANS_PER_DEGREE);
-  const limit = yawThreshold - (fired ? LOOK_AWAY_RELEASE_MARGIN_DEG : 0);
   return forward <= Math.cos(limit * RADIANS_PER_DEGREE);
+}
+
+function lookingAway(metrics, { yawThreshold }, fired) {
+  const limit = yawThreshold - (fired ? LOOK_AWAY_RELEASE_MARGIN_DEG : 0);
+  return outsideLookAwayAngle(metrics.rawPose ?? metrics, limit)
+    && (fired || outsideLookAwayAngle(metrics, limit));
 }
 
 const RULES = [
   { key: "eyeClosure", duration: 1250, active: eyesClosed },
   { key: "yawn", duration: 1000, active: (m, s) => m.mar >= s.marThreshold },
   { key: "lookingAway", duration: 1000, active: lookingAway },
-  { key: "headDown", duration: 1000, active: (m) => m.pitch >= 22 },
+  {
+    key: "headDown",
+    duration: 1000,
+    active: (m, _settings, fired) => (m.rawPose ?? m).pitch >= 22 && (fired || m.pitch >= 22),
+  },
 ];
 
 export class AttentionDetector {

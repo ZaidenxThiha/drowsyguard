@@ -400,6 +400,7 @@ function frame(browserTime, metadata) {
   const { videoWidth: width, videoHeight: height } = video;
   let metrics = null;
   let raw;
+  let relative;
   if (landmarks) {
     const facial = computeMetrics(landmarks, { aspect: width / height });
     let pose = matrix ? angleFromPoseMatrix(matrix) : {};
@@ -413,7 +414,7 @@ function frame(browserTime, metadata) {
       }
     }
     raw = { ear: facial.ear, mar: facial.mar, ...Object.fromEntries(axes.map((axis) => [axis, pose[axis]])) };
-    const relative = Object.fromEntries(axes.map((axis) => [axis, wrapDegrees(raw[axis] - (neutral?.[axis] ?? 0))]));
+    relative = Object.fromEntries(axes.map((axis) => [axis, wrapDegrees(raw[axis] - (neutral?.[axis] ?? 0))]));
     metrics = smooth({ ear: raw.ear, mar: raw.mar, ...relative }, now);
   } else {
     filtered = null;
@@ -421,7 +422,7 @@ function frame(browserTime, metadata) {
   }
   lastTracking = Boolean(landmarks);
   updateCalibration(raw, now);
-  const status = detector.update(now, !calibration && metrics ? { ...metrics, rawEar: raw.ear } : null, settings);
+  const status = detector.update(now, !calibration && metrics ? { ...metrics, rawEar: raw.ear, rawPose: relative } : null, settings);
   for (const key of status.events) logEvent(now, key);
   showTracking(landmarks ? (status.alerts.length ? "Attention alert" : "Face tracked") : "Face not found",
     landmarks && !status.alerts.length ? "good" : "warn");
