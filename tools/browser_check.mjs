@@ -38,6 +38,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(url);
+  assert.equal(await page.getByLabel("Look-away angle (°)").inputValue(), "18");
   await page.getByRole("button", { name: "Try sample" }).click();
   await page.waitForFunction(() => Number(document.getElementById("ear").textContent) > 0);
   await page.waitForFunction(() => /°$/.test(document.getElementById("yaw").textContent));

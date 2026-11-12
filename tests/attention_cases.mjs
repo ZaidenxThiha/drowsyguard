@@ -9,7 +9,10 @@ const cases = [
   { name: "Prolonged eye closure", length: 4000, spans: [eventSpan(1000, 2500, closure)], expected: ["eyeClosure"] },
   { name: "Sustained yawn", length: 4000, spans: [eventSpan(1000, 2500, { mar: .52 })], expected: ["yawn"] },
   { name: "Brief mouth opening", length: 3000, spans: [eventSpan(1000, 1550, { mar: .45 })], expected: [] },
-  { name: "Sustained turn", length: 4500, spans: [eventSpan(1000, 3400, { yaw: -40 })], expected: ["lookingAway"] },
+  { name: "Moderate left turn", length: 3300, spans: [eventSpan(1000, 2150, { yaw: -19 })], expected: ["lookingAway"] },
+  { name: "Moderate right turn", length: 3300, spans: [eventSpan(1000, 2150, { yaw: 19 })], expected: ["lookingAway"] },
+  { name: "Quick sideways glance", length: 3300, spans: [eventSpan(1000, 1700, { yaw: 25 })], expected: [] },
+  { name: "Yaw below threshold", length: 3300, spans: [eventSpan(1000, 3000, { yaw: 17 })], expected: [] },
   { name: "Sustained head drop", length: 3500, spans: [eventSpan(1000, 2200, { pitch: 28 })], expected: ["headDown"] },
   { name: "Interrupted face tracking", length: 3500, spans: [eventSpan(1000, 1750, closure), eventSpan(1750, 2000, null), eventSpan(2000, 2750, closure)], expected: [] },
   {

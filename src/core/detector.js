@@ -1,9 +1,10 @@
 export const DEFAULTS = Object.freeze({
-  earThreshold: 0.2, marThreshold: 0.32, yawThreshold: 30, smoothing: 80,
+  earThreshold: 0.2, marThreshold: 0.32, yawThreshold: 18, smoothing: 80,
 });
 
 const WINDOW_MS = 30_000;
 const MAX_GAP_MS = 500;
+const YAW_RELEASE_MARGIN_DEG = 3;
 
 export const EVENT_LABELS = Object.freeze({
   blink: "Blink",
@@ -22,7 +23,11 @@ function eyesClosed(metrics, { earThreshold }) {
 const RULES = [
   { key: "eyeClosure", duration: 1250, active: eyesClosed },
   { key: "yawn", duration: 1000, active: (m, s) => m.mar >= s.marThreshold },
-  { key: "lookingAway", duration: 2000, active: (m, s) => Math.abs(m.yaw) >= s.yawThreshold },
+  {
+    key: "lookingAway",
+    duration: 1000,
+    active: (m, s, fired) => Math.abs(m.yaw) >= s.yawThreshold - (fired ? YAW_RELEASE_MARGIN_DEG : 0),
+  },
   { key: "headDown", duration: 1000, active: (m) => m.pitch >= 22 },
 ];
 
@@ -68,7 +73,7 @@ export class AttentionDetector {
     this.#last = { time, closed: eyesClosed(metrics, settings) };
     for (const rule of RULES) {
       let episode = this.#episodes.get(rule.key);
-      if (rule.active(metrics, settings)) {
+      if (rule.active(metrics, settings, episode?.fired)) {
         if (!episode) {
           episode = { start: time, fired: false };
           this.#episodes.set(rule.key, episode);

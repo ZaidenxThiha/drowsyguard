@@ -23,6 +23,19 @@ test("calibration uses medians and rejects implausible open-eye baselines", () =
   assert.equal(calibrationFrom([{ ...open, ear: .08 }]), null);
 });
 
+test("look-away starts after one second and stays active until the head turns back", () => {
+  const detector = new AttentionDetector();
+  const turn = { ear: .29, mar: .1, pitch: 0, yaw: 18 };
+  for (let time = 0; time < 1000; time += 100) {
+    assert.deepEqual(detector.update(time, turn).alerts, []);
+  }
+  assert.deepEqual(detector.update(1000, turn).events, ["lookingAway"]);
+  const nearLimit = detector.update(1100, { ...turn, yaw: 16 });
+  assert.deepEqual(nearLimit.alerts, ["lookingAway"]);
+  assert.deepEqual(nearLimit.events, []);
+  assert.deepEqual(detector.update(1200, { ...turn, yaw: 14 }).alerts, []);
+});
+
 test("a raw open-eye frame clears an active eye alert while rolling PERCLOS remains high", () => {
   const detector = new AttentionDetector();
   const open = { ear: .29, rawEar: .29, mar: .1, yaw: 0, pitch: 0 };
