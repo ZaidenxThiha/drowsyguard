@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { stat, realpath } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 
@@ -41,7 +42,7 @@ export function serve({ port = 4173, host = "127.0.0.1" } = {}) {
   return server.listen(port, host);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const server = serve({ port: Number(process.env.PORT ?? 4173) });
   server.on("listening", () => console.log(`DrowsyGuard at http://127.0.0.1:${server.address().port}`));
 }

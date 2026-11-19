@@ -4,6 +4,12 @@ DrowsyGuard is a computer vision midterm project by Thiha Aung and Thin Lei Sand
 
 [Open the demo](https://zaidenxthiha.github.io/drowsyguard/)
 
+## Midterm report and demo
+
+Read the [Word report](docs/DrowsyGuard%20Midterm%20Report.docx) for the comparison of dlib’s 68-point cascaded regression, MediaPipe’s dense landmark tracking, and 3D morphable model fitting. The interactive application uses MediaPipe. The dlib pipeline is included as a separate benchmark, and the report covers 3DMM as theory.
+
+In the submission ZIP, extract the whole folder and run `node tools/serve.mjs` from its root using Node.js 22. Open `http://127.0.0.1:4173` in Chrome. The ZIP includes the built site, model, and sample video. Select **Try sample** to inspect the mesh, then switch to **Start camera** and calibrate for the alert demonstration. While seated, hold a left or right turn, then look upward. Return to neutral between trials. Close your eyes until the alarm repeats, then reopen them while facing forward and listen for the sound to stop. The portrait sample demonstrates tracking only.
+
 ## Run locally
 
 Install Node.js 22 and run:
